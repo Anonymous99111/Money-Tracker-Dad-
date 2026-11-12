@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1030">
+<meta name="robots" content="noindex,nofollow">
+<title>Income Tracker</title>
+<style>
+  :root{color-scheme:dark;--ink:#f5f5f7;--muted:rgba(245,245,247,.58);--accent:#0a84ff;--line:rgba(255,255,255,.12);
+    --glass:rgba(255,255,255,.07);--glass-b:rgba(255,255,255,.15);--bad:#ff6b6b;--good:#30d158;--warn:#ffd60a}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:#0b0b0f;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{margin:0;min-height:100vh;min-height:100dvh;color:var(--ink);
+    font:18px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(60vmax 45vmax at 12% -8%,rgba(10,132,255,.24),transparent 62%),
+               radial-gradient(55vmax 45vmax at 105% 105%,rgba(130,100,255,.17),transparent 62%),#0b0b0f}
+  .wrap{width:100%;max-width:600px;margin:0 auto;
+    padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(110px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  h1{font-size:clamp(22px,5.5vw,28px);margin:0;font-weight:700;letter-spacing:-.4px}
+  h2{font-size:20px;margin:0 0 12px;font-weight:600;letter-spacing:-.2px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin:6px 0 16px}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:22px;padding:18px;margin-bottom:14px;min-width:0;
+    -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+    box-shadow:0 8px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+  label{display:block;font-size:15px;color:var(--muted);margin:14px 0 6px;font-weight:500;letter-spacing:.2px}
+  input,select{display:block;width:100%;min-width:0;max-width:100%;height:56px;padding:0 16px;border:1px solid var(--line);
+    border-radius:16px;font:inherit;font-size:18px;background:rgba(255,255,255,.06);color:var(--ink);
+    -webkit-appearance:none;appearance:none;margin:0}
+  input[type=month]{text-align:left;-webkit-appearance:none;line-height:46px}
+  input[type=month]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+  select{padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23aaa' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center}
+  input::placeholder{color:rgba(245,245,247,.38)}
+  input:focus,select:focus{outline:none;border-color:rgba(10,132,255,.9);box-shadow:0 0 0 3px rgba(10,132,255,.22)}
+  select option{color:#111;background:#fff}
+  .seg{display:flex;gap:2px;padding:3px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px}
+  .seg button{flex:1;height:48px;font-size:18px;padding:0;background:transparent;color:var(--muted);border-radius:11px;font-weight:600}
+  .seg button.on{background:rgba(255,255,255,.17);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.25)}
+  button{font:inherit;font-size:16px;cursor:pointer;border-radius:14px;border:0;padding:0 18px;transition:transform .08s,background .2s,opacity .2s;touch-action:manipulation}
+  button:active{transform:scale(.97)}
+  .primary{display:block;width:100%;height:58px;font-size:19px;margin-top:20px;background:var(--accent);color:#fff;font-weight:600}
+  .primary:disabled{opacity:.55}
+  .ghost{height:40px;background:rgba(255,255,255,.07);color:var(--ink);border:1px solid var(--glass-b);padding:0 13px;font-size:16px;font-weight:500}
+  .ghost:hover{background:rgba(255,255,255,.14)}
+  .link{background:none;color:var(--muted);height:auto;padding:6px;font-size:15px}
+  .danger{color:var(--bad);border-color:rgba(255,107,107,.4)}
+  .msg{margin-top:10px;font-size:14.5px;min-height:20px}
+  .err{color:var(--bad)} .ok{color:var(--good)}
+  .sumhead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .sumhead h2{margin:0}
+  .sumhead input{width:auto;flex:0 1 190px;height:42px;line-height:40px}
+  .big{font-size:clamp(32px,9vw,42px);font-weight:700;letter-spacing:-1px;margin-top:14px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+  .stats div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:10px 4px;min-width:0}
+  .stats span{display:block;font-size:14px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+  table{width:100%;border-collapse:collapse}
+  td,th{padding:12px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:17px;word-break:break-word}
+  tr:last-child td{border-bottom:0}
+  th{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  td.r,th.r{text-align:right;white-space:nowrap}
+  .tag{font-size:13px;padding:2px 9px;border-radius:99px;background:rgba(10,132,255,.18);color:#7cc0ff;font-weight:500;white-space:nowrap}
+  .tag.rent{background:rgba(255,255,255,.12);color:rgba(245,245,247,.8)}
+  .pending{color:var(--warn);font-size:16px}
+  .entry{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:0}
+  .entry>div{min-width:0}
+  .entry>div:first-child{overflow-wrap:anywhere}
+  .meta{color:var(--muted);font-size:15px}
+  .actions{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+  #login{max-width:380px;margin:16vh auto 0;text-align:center}
+  #login h1{margin-bottom:4px}
+  #login label{text-align:left}
+  .hidden{display:none!important}
+  .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));z-index:10;
+    display:flex;gap:4px;padding:5px;width:min(360px,calc(100% - 32px));border-radius:26px;background:rgba(30,30,38,.62);
+    border:1px solid var(--glass-b);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
+    box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .tabbar button{flex:1;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    background:transparent;color:var(--muted);border-radius:21px;font-size:13.5px;font-weight:600;padding:0}
+  .tabbar button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button.on{background:rgba(255,255,255,.14);color:#fff}
+  .mhead{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding:6px 2px;color:var(--muted);
+    font-size:12.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .more{width:100%;margin-top:14px;height:44px}
+  .card.off{display:none}
+  .toprt{display:flex;align-items:center;gap:4px}
+  .langbtn{border:1px solid var(--glass-b);border-radius:99px;padding:6px 14px!important;color:var(--ink)!important;text-decoration:none!important;font-size:15px!important;font-weight:600;background:rgba(255,255,255,.08)}
+  #langBtn2{margin-top:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{height:42px;padding:0 16px;background:rgba(255,255,255,.08);border:1px solid var(--glass-b);color:var(--ink);border-radius:21px;font-size:16.5px}
+  .chip:hover{background:rgba(255,255,255,.16)}
+  .words{margin-top:8px;font-size:16px;color:#7cc0ff;min-height:22px;font-weight:500}
+  #toast{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translate(-50%,-30px);opacity:0;pointer-events:none;z-index:30;
+    width:min(440px,calc(100% - 32px));padding:16px 20px;border-radius:18px;font-size:17px;font-weight:600;color:#eafff0;
+    background:rgba(30,120,60,.55);border:1px solid rgba(48,209,88,.6);
+    -webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:0 10px 30px rgba(0,0,0,.4);
+    transition:opacity .25s,transform .25s}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.bad{background:rgba(150,40,40,.6);border-color:rgba(255,107,107,.6);color:#fff0f0}
+  @media (max-width:380px){.card{padding:15px;border-radius:20px}.stats b{font-size:14px}}
+  @media (min-width:900px){.wrap{max-width:640px}}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card{background:rgba(32,34,46,.92)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login" class="card">
+    <h1 data-i="title">Income Tracker</h1>
+    <label for="pw" data-i="pw">Enter password</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button class="primary" id="loginBtn" data-i="open">Open</button>
+    <div class="msg err" id="loginMsg"></div>
+    <button class="link langbtn" type="button" id="langBtn2"></button>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div class="top">
+      <h1 data-i="title">Income Tracker</h1>
+      <div class="toprt"><button class="link langbtn" type="button" id="langBtn"></button><button class="link" id="logout" data-i="logout">Log out</button></div>
+    </div>
+
+    <div class="card" data-tab="add">
+      <h2 id="formTitle">Add new payment</h2>
+      <label for="fMonth" style="margin-top:0" data-i="forMonth">For which month?</label>
+      <input id="fMonth" type="month">
+      <label data-i="typeLbl">Type of payment</label>
+      <div class="seg" id="seg">
+        <button type="button" data-v="Interest" class="on" data-i="interest">Interest</button>
+        <button type="button" data-v="Rent" data-i="rent">Rent</button>
+      </div>
+      <input id="fType" type="hidden" value="Interest">
+      <label for="fPerson" data-i="who">Who paid you?</label>
+      <input id="fPerson" list="people" data-ph="whoPh" placeholder="Type name, or tap one below" autocomplete="off">
+      <datalist id="people"></datalist>
+      <div class="chips" id="chips"></div>
+      <label for="fAmount" data-i="amount">Amount received (₹)</label>
+      <input id="fAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0">
+      <div class="words" id="amtWords"></div>
+      <label for="fNotes" data-i="note">Note (optional)</label>
+      <input id="fNotes" maxlength="200" data-ph="notePh" placeholder="e.g. UPI, cash, cheque no.">
+      <button class="primary" id="saveBtn">Save</button>
+      <button class="link hidden" id="cancelEdit" data-i="cancel">Cancel edit</button>
+      <div class="msg" id="formMsg"></div>
+    </div>
+
+    <div class="card" data-tab="summary">
+      <div class="sumhead"><h2 data-i="totals">Totals</h2><input id="sMonth" type="month"></div>
+      <div class="big" id="monthTotal">₹0</div>
+      <div class="stats">
+        <div><span data-i="interest">Interest</span><b id="monthInt">₹0</b></div>
+        <div><span data-i="rent">Rent</span><b id="monthRent">₹0</b></div>
+        <div><span data-i="count">Payments</span><b id="monthCount">0</b></div>
+      </div>
+      <h2 style="margin-top:18px" data-i="whoHow">Who paid how much</h2>
+      <table><thead><tr><th data-i="name">Name</th><th class="r" data-i="thisMonth">This month</th><th class="r" data-i="allTime">All time</th></tr></thead>
+      <tbody id="personRows"></tbody></table>
+      <div id="pendingBox" class="pending" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card" data-tab="summary">
+      <h2 data-i="byMonth">Month by month</h2>
+      <table><tbody id="monthRows"></tbody></table>
+    </div>
+
+    <div class="card" data-tab="entries">
+      <h2 data-i="history">History</h2>
+      <div class="row">
+        <input id="qSearch" data-ph="search" placeholder="Search name / notes">
+        <select id="qType"><option value="" data-i="allTypes">All types</option><option value="Interest" data-i="interest">Interest</option><option value="Rent" data-i="rent">Rent</option></select>
+      </div>
+      <div style="margin-top:10px"><select id="qMonth"><option value="" data-i="allMonths">All months</option></select></div>
+      <div class="meta" id="qCount" style="margin:12px 0 0"></div>
+      <div id="recent"></div>
+      <div class="msg" id="listMsg"></div>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+  <nav class="tabbar" id="tabbar">
+    <button data-t="add" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span data-i="tabAdd">Add</span></button>
+    <button data-t="summary"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-7"/></svg><span data-i="tabTotals">Totals</span></button>
+    <button data-t="entries"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span data-i="tabHistory">History</span></button>
+  </nav>
+</div>
+
+<script>
+/* ====== CONFIG: paste your Apps Script Web App URL here ====== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxHonXB2PuSBXv6C-WBHD8E06butjsgNGnmj8-40ptu0RHKqF4Gu1yLM0JPTQUrjm2SWg/exec';
+/* ============================================================== */
+
+const $ = id => document.getElementById(id);
+let password = sessionStorage.getItem('pw') || '';
+let entries = [];
+let editingId = null;
+const PAGE = 20;
+let shown = PAGE;
+
+/* ====== LANGUAGE (English / ગુજરાતી) ====== */
+const I18N = {
+ en:{title:'Income Tracker',pw:'Enter password',open:'Open',logout:'Log out',addTitle:'Add new payment',editTitle:'Edit payment',
+  forMonth:'For which month?',typeLbl:'Type of payment',interest:'Interest',rent:'Rent',who:'Who paid you?',
+  whoPh:'Type name, or tap one below',amount:'Amount received (₹)',note:'Note (optional)',notePh:'e.g. UPI, cash, cheque no.',
+  save:'Save',saveChanges:'Save changes',cancel:'Cancel edit',totals:'Totals',count:'Payments',whoHow:'Who paid how much',
+  name:'Name',thisMonth:'This month',allTime:'All time',byMonth:'Month by month',history:'History',search:'Search name / notes',
+  allTypes:'All types',allMonths:'All months',tabAdd:'Add',tabTotals:'Totals',tabHistory:'History',
+  pending:'Not yet received in {0} from: {1}',nothing:'Nothing added yet',noMatch:'No matching entries',
+  countLine:'{0} of {1} entries · {2}',more:'Show more ({0} left)',edit:'Edit',del:'Delete',
+  saved:'✓ Saved — ',updated:'✓ Updated — ',removed:'Removed',notSaved:'Not saved: ',fill:'Please fill month, name and a valid amount.',
+  confirmDel:'Remove this payment?',checking:'Checking…',noServer:'Could not reach the server. Check internet / API URL.',
+  saving:'Saving…',rupees:'rupees',wrongPw:'Wrong password',langBtn:'ગુજરાતી'},
+ gu:{title:'આવકની નોંધ',pw:'પાસવર્ડ નાખો',open:'ખોલો',logout:'બહાર નીકળો',addTitle:'નવી રકમ ઉમેરો',editTitle:'રકમ સુધારો',
+  forMonth:'કયા મહિનાની રકમ?',typeLbl:'રકમનો પ્રકાર',interest:'વ્યાજ',rent:'ભાડું',who:'કોની પાસેથી મળ્યા?',
+  whoPh:'નામ લખો, અથવા નીચેથી પસંદ કરો',amount:'મળેલી રકમ (₹)',note:'નોંધ (જરૂર હોય તો)',notePh:'દા.ત. UPI, રોકડા, ચેક નંબર',
+  save:'સાચવો',saveChanges:'ફેરફાર સાચવો',cancel:'રદ કરો',totals:'કુલ હિસાબ',count:'કુલ નોંધ',whoHow:'કોની પાસેથી કેટલા મળ્યા',
+  name:'નામ',thisMonth:'આ મહિને',allTime:'કુલ',byMonth:'મહિના પ્રમાણે',history:'બધી નોંધો',search:'નામ / નોંધ શોધો',
+  allTypes:'બધા પ્રકાર',allMonths:'બધા મહિના',tabAdd:'ઉમેરો',tabTotals:'હિસાબ',tabHistory:'નોંધો',
+  pending:'{0} માં હજુ આમની પાસેથી મળ્યા નથી: {1}',nothing:'હજુ કંઈ ઉમેર્યું નથી',noMatch:'કંઈ મળ્યું નથી',
+  countLine:'{1} માંથી {0} નોંધ · {2}',more:'વધુ બતાવો (હજુ {0})',edit:'સુધારો',del:'કાઢી નાખો',
+  saved:'✓ સચવાઈ ગયું — ',updated:'✓ સુધારી દીધું — ',removed:'કાઢી નાખ્યું',notSaved:'સચવાયું નથી: ',fill:'મહિનો, નામ અને સાચી રકમ ભરો.',
+  confirmDel:'આ નોંધ કાઢી નાખવી છે?',checking:'તપાસી રહ્યા છીએ…',noServer:'સર્વર સાથે જોડાઈ શકાયું નથી. ઇન્ટરનેટ તપાસો.',
+  saving:'સાચવી રહ્યા છીએ…',rupees:'રૂપિયા',wrongPw:'પાસવર્ડ ખોટો છે',langBtn:'English'}
+};
+const GU_MONTHS = ['જાન્યુઆરી','ફેબ્રુઆરી','માર્ચ','એપ્રિલ','મે','જૂન','જુલાઈ','ઑગસ્ટ','સપ્ટેમ્બર','ઑક્ટોબર','નવેમ્બર','ડિસેમ્બર'];
+const GU_NUM = ['','એક','બે','ત્રણ','ચાર','પાંચ','છ','સાત','આઠ','નવ','દસ','અગિયાર','બાર','તેર','ચૌદ','પંદર','સોળ','સત્તર','અઢાર','ઓગણીસ','વીસ',
+ 'એકવીસ','બાવીસ','તેવીસ','ચોવીસ','પચ્ચીસ','છવ્વીસ','સત્તાવીસ','અઠ્ઠાવીસ','ઓગણત્રીસ','ત્રીસ','એકત્રીસ','બત્રીસ','તેત્રીસ','ચોત્રીસ','પાંત્રીસ','છત્રીસ','સાડત્રીસ','આડત્રીસ','ઓગણચાલીસ','ચાલીસ',
+ 'એકતાલીસ','બેતાલીસ','તેતાલીસ','ચુમ્માલીસ','પિસ્તાલીસ','છેતાલીસ','સુડતાલીસ','અડતાલીસ','ઓગણપચાસ','પચાસ','એકાવન','બાવન','ત્રેપન','ચોપન','પંચાવન','છપ્પન','સત્તાવન','અઠ્ઠાવન','ઓગણસાઠ','સાઠ',
+ 'એકસઠ','બાસઠ','ત્રેસઠ','ચોસઠ','પાંસઠ','છાસઠ','સડસઠ','અડસઠ','ઓગણોતેર','સિત્તેર','એકોતેર','બોતેર','તોતેર','ચુમોતેર','પંચોતેર','છોતેર','સિત્યોતેર','ઇઠ્યોતેર','ઓગણએંસી','એંસી',
+ 'એક્યાસી','બ્યાસી','ત્યાસી','ચોર્યાસી','પંચ્યાસી','છ્યાસી','સિત્યાસી','અઠ્યાસી','નેવ્યાસી','નેવું','એકાણું','બાણું','ત્રાણું','ચોરાણું','પંચાણું','છન્નું','સત્તાણું','અઠ્ઠાણું','નવ્વાણું'];
+const GU_HUNDRED = ['','એકસો','બસો','ત્રણસો','ચારસો','પાંચસો','છસો','સાતસો','આઠસો','નવસો'];
+let lang = 'gu';
+try { lang = localStorage.getItem('lang') || 'gu'; } catch (e) {}
+const T = (k, ...a) => { let s = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; };
+const prettyMonth = m => {
+  const [y, mo] = m.split('-');
+  if (lang === 'gu') return GU_MONTHS[Number(mo) - 1] + ' ' + y;
+  return new Date(m + '-01T00:00:00').toLocaleDateString('en-IN', {month:'long', year:'numeric'});
+};
+const typeName = t => T(t === 'Rent' ? 'rent' : 'interest');
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = T(el.dataset.i); });
+  document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = T(el.dataset.ph); });
+  $('langBtn').textContent = T('langBtn'); $('langBtn2').textContent = T('langBtn');
+  $('formTitle').textContent = T(editingId ? 'editTitle' : 'addTitle');
+  $('saveBtn').textContent = T(editingId ? 'saveChanges' : 'save');
+  document.title = T('title');
+  updateWords();
+  render();
+}
+function toggleLang() {
+  lang = lang === 'gu' ? 'en' : 'gu';
+  try { localStorage.setItem('lang', lang); } catch (e) {}
+  applyLang();
+}
+
+
+const inr = n => '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits: 2});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const thisMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); };
+
+async function api(action, extra = {}) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},   // avoids CORS preflight
+    body: JSON.stringify({action, password, ...extra})
+  });
+  return res.json();
+}
+
+/* ---------- login ---------- */
+async function login(pw) {
+  password = pw;
+  $('loginMsg').textContent = T('checking');
+  try {
+    const r = await api('login');
+    if (!r.ok) { $('loginMsg').textContent = r.error === 'Wrong password' ? T('wrongPw') : r.error; password = ''; sessionStorage.removeItem('pw'); return false; }
+    sessionStorage.setItem('pw', pw);
+    $('login').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('loginMsg').textContent = '';
+    $('fMonth').value = thisMonth();
+    $('sMonth').value = thisMonth();
+    await refresh();
+    return true;
+  } catch (e) {
+    $('loginMsg').textContent = T('noServer');
+    return false;
+  }
+}
+$('loginBtn').onclick = () => login($('pw').value);
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login($('pw').value); });
+$('logout').onclick = () => { sessionStorage.removeItem('pw'); location.reload(); };
+
+/* ---------- data ---------- */
+async function refresh() {
+  const r = await api('list');
+  if (!r.ok) { $('listMsg').textContent = r.error; $('listMsg').className = 'msg err'; return; }
+  entries = r.entries;
+  render();
+}
+
+function render() {
+  // people suggestions
+  const people = [...new Set(entries.map(e => e.person))].sort((a,b) => a.localeCompare(b));
+  $('people').innerHTML = people.map(p => `<option value="${esc(p)}">`).join('');
+
+  const freq = {}; entries.forEach(e => freq[e.person] = (freq[e.person] || 0) + 1);
+  $('chips').innerHTML = [...people].sort((a, b) => freq[b] - freq[a]).slice(0, 8)
+    .map(p => `<button type="button" class="chip" data-name="${esc(p)}">${esc(p)}</button>`).join('');
+  // selected-month summary
+  const m = $('sMonth').value || thisMonth();
+  const inMonth = entries.filter(e => e.month === m);
+  const sum = a => a.reduce((t, e) => t + e.amount, 0);
+  $('monthTotal').textContent = inr(sum(inMonth));
+  $('monthInt').textContent = inr(sum(inMonth.filter(e => e.type === 'Interest')));
+  $('monthRent').textContent = inr(sum(inMonth.filter(e => e.type === 'Rent')));
+  $('monthCount').textContent = inMonth.length;
+
+  // per person
+  const rows = people.map(p => ({
+    p,
+    month: sum(inMonth.filter(e => e.person === p)),
+    all: sum(entries.filter(e => e.person === p))
+  }));
+  $('personRows').innerHTML = rows.length
+    ? rows.map(r => `<tr><td>${esc(r.p)}</td><td class="r">${r.month ? inr(r.month) : '—'}</td><td class="r">${inr(r.all)}</td></tr>`).join('')
+    : `<tr><td colspan="3" style="color:var(--muted)">${T('nothing')}</td></tr>`;
+  const pend = rows.filter(r => !r.month).map(r => r.p);
+  $('pendingBox').textContent = pend.length ? T('pending', prettyMonth(m), pend.join(', ')) : '';
+
+  // month-wise
+  const months = [...new Set(entries.map(e => e.month))].sort().reverse();
+  $('monthRows').innerHTML = months.length
+    ? months.map(mm => `<tr><td>${prettyMonth(mm)}</td><td class="r"><b>${inr(sum(entries.filter(e => e.month === mm)))}</b></td></tr>`).join('')
+    : `<tr><td style="color:var(--muted)">${T('nothing')}</td></tr>`;
+
+  // all entries, filterable (newest month first, then latest added)
+  const qm = $('qMonth'), keep = qm.value;
+  qm.innerHTML = `<option value="">${T('allMonths')}</option>` + months.map(mm => `<option value="${mm}">${prettyMonth(mm)}</option>`).join('');
+  qm.value = months.includes(keep) ? keep : '';
+  const q = $('qSearch').value.trim().toLowerCase(), qt = $('qType').value;
+  const list = entries.map((e, i) => ({e, i}))
+    .filter(({e}) => (!qm.value || e.month === qm.value) && (!qt || e.type === qt) &&
+      (!q || (e.person + ' ' + e.notes).toLowerCase().includes(q)))
+    .sort((a, b) => b.e.month.localeCompare(a.e.month) || b.i - a.i)
+    .map(x => x.e);
+  const page = list.slice(0, shown);
+  $('qCount').textContent = T('countLine', list.length, entries.length, inr(sum(list)));
+  $('recent').innerHTML = list.length ? page.map((e, i) => monthHeader(list, page, i) + `
+    <div class="entry">
+      <div>
+        <b>${esc(e.person)}</b> <span class="tag ${e.type === 'Rent' ? 'rent' : ''}">${esc(typeName(e.type))}</span>${e.notes ? '<br><span class="meta">' + esc(e.notes) + '</span>' : ''}
+      </div>
+      <div style="text-align:right">
+        <b>${inr(e.amount)}</b>
+        <div class="actions">
+          <button class="ghost small" data-edit="${esc(e.id)}">${T('edit')}</button>
+          <button class="ghost small danger" data-del="${esc(e.id)}">${T('del')}</button>
+        </div>
+      </div>
+    </div>`).join('') + (list.length > shown ? `<button class="ghost more" id="moreBtn">${T('more', list.length - shown)}</button>` : '') : `<div style="color:var(--muted)">${T('noMatch')}</div>`;
+}
+function monthHeader(list, page, i) {
+  const e = page[i];
+  if (i > 0 && page[i - 1].month === e.month) return '';
+  const tot = list.filter(x => x.month === e.month).reduce((t, x) => t + x.amount, 0);
+  return `<div class="mhead"><span>${prettyMonth(e.month)}</span><span>${inr(tot)}</span></div>`;
+}
+['qSearch','qType','qMonth'].forEach(id => $(id).addEventListener('input', () => { shown = PAGE; render(); }));
+$('sMonth').addEventListener('change', render);
+
+
+/* ---------- helpers for easy reading ---------- */
+function wordsGu(n) {
+  n = Math.floor(n); if (!n || n >= 1e9) return '';
+  const parts = [];
+  [[10000000,'કરોડ'],[100000,'લાખ'],[1000,'હજાર']].forEach(([v, nm]) => {
+    if (n >= v) { parts.push(GU_NUM[Math.floor(n / v)] + ' ' + nm); n %= v; }
+  });
+  if (n >= 100) { parts.push(GU_HUNDRED[Math.floor(n / 100)]); n %= 100; }
+  if (n) parts.push(GU_NUM[n]);
+  return parts.join(' ');
+}
+function words(n) {
+  if (lang === 'gu') return wordsGu(n);
+  n = Math.floor(n); if (!n || n >= 1e9) return '';
+  const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two = x => x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : '');
+  const parts = [];
+  [[10000000,'Crore'],[100000,'Lakh'],[1000,'Thousand'],[100,'Hundred']].forEach(([v, nm]) => {
+    if (n >= v) { parts.push(two(Math.floor(n / v)) + ' ' + nm); n %= v; }
+  });
+  if (n) parts.push(two(n));
+  return parts.join(' ');
+}
+function updateWords() {
+  const v = Number($('fAmount').value);
+  $('amtWords').textContent = v > 0 ? inr(v) + ' — ' + words(v) + ' ' + T('rupees') : '';
+}
+$('fAmount').addEventListener('input', updateWords);
+let toastTimer;
+function toast(text, bad) {
+  const t = $('toast'); t.textContent = text; t.className = 'show' + (bad ? ' bad' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+$('chips').addEventListener('click', ev => {
+  if (ev.target.dataset.name) { $('fPerson').value = ev.target.dataset.name; $('fAmount').focus(); }
+});
+
+/* ---------- tabs ---------- */
+function showTab(t) {
+  document.querySelectorAll('[data-tab]').forEach(c => c.classList.toggle('off', c.dataset.tab !== t));
+  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  try { sessionStorage.setItem('tab', t); } catch (e) {}
+  window.scrollTo({top: 0});
+}
+$('tabbar').addEventListener('click', ev => { const b = ev.target.closest('button'); if (b) showTab(b.dataset.t); });
+showTab((() => { try { return sessionStorage.getItem('tab') || 'add'; } catch (e) { return 'add'; } })());
+
+/* ---------- form ---------- */
+function setType(v) {
+  $('fType').value = v;
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+}
+$('seg').addEventListener('click', ev => { if (ev.target.dataset.v) setType(ev.target.dataset.v); });
+
+function resetForm() {
+  editingId = null;
+  $('formTitle').textContent = T('addTitle');
+  $('saveBtn').textContent = T('save');
+  $('cancelEdit').classList.add('hidden');
+  $('fPerson').value = ''; $('fAmount').value = ''; $('fNotes').value = ''; $('amtWords').textContent = '';
+}
+$('cancelEdit').onclick = resetForm;
+
+$('saveBtn').onclick = async () => {
+  const entry = {
+    id: editingId,
+    month: $('fMonth').value,
+    type: $('fType').value,
+    person: $('fPerson').value.trim(),
+    amount: $('fAmount').value,
+    notes: $('fNotes').value.trim()
+  };
+  const msg = $('formMsg');
+  if (!entry.month || !entry.person || !(Number(entry.amount) > 0)) {
+    msg.className = 'msg err'; msg.textContent = T('fill'); return;
+  }
+  $('saveBtn').disabled = true; msg.className = 'msg'; msg.textContent = T('saving');
+  try {
+    const r = await api(editingId ? 'update' : 'add', {entry});
+    if (!r.ok) throw new Error(r.error);
+    msg.textContent = ''; toast(T(editingId ? 'updated' : 'saved') + entry.person + ', ' + inr(entry.amount));
+    resetForm();
+    $('sMonth').value = entry.month;
+    await refresh();
+  } catch (e) {
+    msg.textContent = ''; toast(T('notSaved') + e.message, true);
+  } finally { $('saveBtn').disabled = false; }
+};
+
+$('recent').addEventListener('click', async ev => {
+  if (ev.target.id === 'moreBtn') { shown += PAGE; render(); return; }
+  const editId = ev.target.dataset.edit, delId = ev.target.dataset.del;
+  if (editId) {
+    const e = entries.find(x => x.id === editId); if (!e) return;
+    editingId = e.id;
+    $('fMonth').value = e.month; setType(e.type); $('fPerson').value = e.person;
+    $('fAmount').value = e.amount; $('fNotes').value = e.notes; updateWords();
+    $('formTitle').textContent = T('editTitle');
+    $('saveBtn').textContent = T('saveChanges');
+    $('cancelEdit').classList.remove('hidden');
+    showTab('add');
+  }
+  if (delId) {
+    const e = entries.find(x => x.id === delId); if (!e) return;
+    if (!confirm(`${T('confirmDel')}\n\n${e.person} – ${inr(e.amount)} (${prettyMonth(e.month)})?`)) return;
+    const r = await api('delete', {id: delId});
+    toast(r.ok ? T('removed') : r.error, !r.ok);
+    await refresh();
+  }
+});
+
+$('langBtn').onclick = toggleLang; $('langBtn2').onclick = toggleLang;
+applyLang();
+
+/* auto-login if password already entered this session */
+if (password && API_URL.startsWith('http')) login(password);
+</script>
+</body>
+</html>
