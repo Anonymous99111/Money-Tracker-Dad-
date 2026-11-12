@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1030">
+<meta name="robots" content="noindex,nofollow">
+<title>Income Tracker</title>
+<style>
+  :root{--ink:#f4f7ff;--muted:rgba(235,240,255,.68);--accent:#5eead4;--line:rgba(255,255,255,.16);--bad:#ff8a8a;--warn:#ffd27a;
+    --glass:rgba(255,255,255,.12);--glass-b:rgba(255,255,255,.28);}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:#0b1030}
+  body{margin:0;min-height:100vh;color:var(--ink);font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1100px 700px at 10% -10%,#4f46e5 0%,transparent 60%),
+               radial-gradient(900px 700px at 100% 10%,#0d9488 0%,transparent 55%),
+               radial-gradient(900px 800px at 40% 110%,#be185d 0%,transparent 55%),#0b1030;
+    background-attachment:fixed}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 16px 40px}
+  h1{font-size:22px;margin:0;letter-spacing:.2px}
+  h2{font-size:18px;margin:0 0 12px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:20px;padding:18px;margin-bottom:16px;
+    -webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:0 10px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.35)}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px;letter-spacing:.3px}
+  input,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:17px;
+    background:rgba(255,255,255,.1);color:var(--ink);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  input::placeholder{color:rgba(235,240,255,.45)}
+  input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,234,212,.25)}
+  select option{color:#111;background:#fff}
+  input[type=month]{color-scheme:dark}
+  button{font:inherit;cursor:pointer;border-radius:12px;border:0;padding:12px 18px;transition:transform .08s,background .2s}
+  button:active{transform:scale(.97)}
+  .primary{background:linear-gradient(135deg,#5eead4,#60a5fa);color:#06202b;width:100%;margin-top:18px;font-weight:700;
+    box-shadow:0 6px 20px rgba(94,234,212,.3)}
+  .primary:disabled{opacity:.6}
+  .ghost{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--glass-b);padding:8px 12px;font-size:15px}
+  .ghost:hover{background:rgba(255,255,255,.18)}
+  .link{background:none;color:var(--muted);padding:6px;font-size:15px;text-decoration:underline}
+  .small{padding:6px 10px;font-size:14px}
+  .danger{color:var(--bad);border-color:rgba(255,138,138,.5)}
+  .msg{margin-top:10px;font-size:15px;min-height:20px}
+  .err{color:var(--bad)} .ok{color:var(--accent)}
+  .big{font-size:34px;font-weight:800;letter-spacing:-.5px}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;text-align:center}
+  .stats div{background:rgba(255,255,255,.09);border:1px solid var(--line);border-radius:14px;padding:10px 4px}
+  .stats span{display:block;font-size:12px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  table{width:100%;border-collapse:collapse}
+  td,th{padding:10px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:16px}
+  tr:last-child td{border-bottom:0}
+  th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  td.r,th.r{text-align:right}
+  .tag{font-size:12px;padding:2px 9px;border-radius:99px;background:rgba(94,234,212,.2);color:#8ff5e3;border:1px solid rgba(94,234,212,.35)}
+  .tag.rent{background:rgba(147,160,255,.2);color:#c3caff;border-color:rgba(147,160,255,.4)}
+  .pending{color:var(--warn);font-size:15px}
+  .entry{display:flex;justify-content:space-between;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:0}
+  .meta{color:var(--muted);font-size:14px}
+  .actions{display:flex;gap:6px;align-items:flex-start}
+  #login{max-width:380px;margin:14vh auto 0;text-align:center}
+  #login h1{margin-bottom:6px}
+  #login label{text-align:left}
+  .hidden{display:none}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.card{background:rgba(30,35,80,.85)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login" class="card">
+    <h1>Income Tracker</h1>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button class="primary" id="loginBtn">Open</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div class="top">
+      <h1>Income Tracker</h1>
+      <button class="link" id="logout">Log out</button>
+    </div>
+
+    <div class="card">
+      <h2 id="formTitle">Add entry</h2>
+      <div class="row">
+        <div><label for="fMonth">Month</label><input id="fMonth" type="month"></div>
+        <div><label for="fType">Type</label>
+          <select id="fType"><option>Interest</option><option>Rent</option></select></div>
+      </div>
+      <label for="fPerson">Received from</label>
+      <input id="fPerson" list="people" placeholder="Name" autocomplete="off">
+      <datalist id="people"></datalist>
+      <label for="fAmount">Amount (₹)</label>
+      <input id="fAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0">
+      <label for="fNotes">Notes (optional)</label>
+      <input id="fNotes" maxlength="200" placeholder="e.g. UPI, cash, cheque no.">
+      <button class="primary" id="saveBtn">Save entry</button>
+      <button class="link hidden" id="cancelEdit">Cancel edit</button>
+      <div class="msg" id="formMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="align-items:end">
+        <div><h2 style="margin:0">Summary</h2></div>
+        <div><input id="sMonth" type="month"></div>
+      </div>
+      <div class="big" id="monthTotal" style="margin-top:12px">₹0</div>
+      <div class="stats">
+        <div><span>Interest</span><b id="monthInt">₹0</b></div>
+        <div><span>Rent</span><b id="monthRent">₹0</b></div>
+        <div><span>Entries</span><b id="monthCount">0</b></div>
+      </div>
+      <h2 style="margin-top:18px">By person</h2>
+      <table><thead><tr><th>Name</th><th class="r">This month</th><th class="r">All time</th></tr></thead>
+      <tbody id="personRows"></tbody></table>
+      <div id="pendingBox" class="pending" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Month-wise totals</h2>
+      <table><tbody id="monthRows"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>All entries</h2>
+      <div class="row">
+        <input id="qSearch" placeholder="Search name / notes">
+        <select id="qType"><option value="">All types</option><option>Interest</option><option>Rent</option></select>
+      </div>
+      <div style="margin-top:8px"><select id="qMonth"><option value="">All months</option></select></div>
+      <div class="meta" id="qCount" style="margin:10px 0 0;color:var(--muted);font-size:14px"></div>
+      <div id="recent"></div>
+      <div class="msg" id="listMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== CONFIG: paste your Apps Script Web App URL here ====== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxHonXB2PuSBXv6C-WBHD8E06butjsgNGnmj8-40ptu0RHKqF4Gu1yLM0JPTQUrjm2SWg/exec';
+/* ============================================================== */
+
+const $ = id => document.getElementById(id);
+let password = sessionStorage.getItem('pw') || '';
+let entries = [];
+let editingId = null;
+
+const inr = n => '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits: 2});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const thisMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); };
+const prettyMonth = m => new Date(m + '-01T00:00:00').toLocaleDateString('en-IN', {month:'long', year:'numeric'});
+
+async function api(action, extra = {}) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},   // avoids CORS preflight
+    body: JSON.stringify({action, password, ...extra})
+  });
+  return res.json();
+}
+
+/* ---------- login ---------- */
+async function login(pw) {
+  password = pw;
+  $('loginMsg').textContent = 'Checking…';
+  try {
+    const r = await api('login');
+    if (!r.ok) { $('loginMsg').textContent = r.error; password = ''; sessionStorage.removeItem('pw'); return false; }
+    sessionStorage.setItem('pw', pw);
+    $('login').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('loginMsg').textContent = '';
+    $('fMonth').value = thisMonth();
+    $('sMonth').value = thisMonth();
+    await refresh();
+    return true;
+  } catch (e) {
+    $('loginMsg').textContent = 'Could not reach the server. Check internet / API URL.';
+    return false;
+  }
+}
+$('loginBtn').onclick = () => login($('pw').value);
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login($('pw').value); });
+$('logout').onclick = () => { sessionStorage.removeItem('pw'); location.reload(); };
+
+/* ---------- data ---------- */
+async function refresh() {
+  const r = await api('list');
+  if (!r.ok) { $('listMsg').textContent = r.error; $('listMsg').className = 'msg err'; return; }
+  entries = r.entries;
+  render();
+}
+
+function render() {
+  // people suggestions
+  const people = [...new Set(entries.map(e => e.person))].sort((a,b) => a.localeCompare(b));
+  $('people').innerHTML = people.map(p => `<option value="${esc(p)}">`).join('');
+
+  // selected-month summary
+  const m = $('sMonth').value || thisMonth();
+  const inMonth = entries.filter(e => e.month === m);
+  const sum = a => a.reduce((t, e) => t + e.amount, 0);
+  $('monthTotal').textContent = inr(sum(inMonth));
+  $('monthInt').textContent = inr(sum(inMonth.filter(e => e.type === 'Interest')));
+  $('monthRent').textContent = inr(sum(inMonth.filter(e => e.type === 'Rent')));
+  $('monthCount').textContent = inMonth.length;
+
+  // per person
+  const rows = people.map(p => ({
+    p,
+    month: sum(inMonth.filter(e => e.person === p)),
+    all: sum(entries.filter(e => e.person === p))
+  }));
+  $('personRows').innerHTML = rows.length
+    ? rows.map(r => `<tr><td>${esc(r.p)}</td><td class="r">${r.month ? inr(r.month) : '—'}</td><td class="r">${inr(r.all)}</td></tr>`).join('')
+    : '<tr><td colspan="3" style="color:var(--muted)">No entries yet</td></tr>';
+  const pend = rows.filter(r => !r.month).map(r => r.p);
+  $('pendingBox').textContent = pend.length ? `Not received in ${prettyMonth(m)}: ${pend.join(', ')}` : '';
+
+  // month-wise
+  const months = [...new Set(entries.map(e => e.month))].sort().reverse();
+  $('monthRows').innerHTML = months.length
+    ? months.map(mm => `<tr><td>${prettyMonth(mm)}</td><td class="r"><b>${inr(sum(entries.filter(e => e.month === mm)))}</b></td></tr>`).join('')
+    : '<tr><td style="color:var(--muted)">No entries yet</td></tr>';
+
+  // all entries, filterable (newest month first, then latest added)
+  const qm = $('qMonth'), keep = qm.value;
+  qm.innerHTML = '<option value="">All months</option>' + months.map(mm => `<option value="${mm}">${prettyMonth(mm)}</option>`).join('');
+  qm.value = months.includes(keep) ? keep : '';
+  const q = $('qSearch').value.trim().toLowerCase(), qt = $('qType').value;
+  const list = entries.map((e, i) => ({e, i}))
+    .filter(({e}) => (!qm.value || e.month === qm.value) && (!qt || e.type === qt) &&
+      (!q || (e.person + ' ' + e.notes).toLowerCase().includes(q)))
+    .sort((a, b) => b.e.month.localeCompare(a.e.month) || b.i - a.i)
+    .map(x => x.e);
+  $('qCount').textContent = `${list.length} of ${entries.length} entries · ${inr(sum(list))}`;
+  $('recent').innerHTML = list.length ? list.map(e => `
+    <div class="entry">
+      <div>
+        <b>${esc(e.person)}</b> <span class="tag ${e.type === 'Rent' ? 'rent' : ''}">${esc(e.type)}</span><br>
+        <span class="meta">${prettyMonth(e.month)}${e.notes ? ' · ' + esc(e.notes) : ''}</span>
+      </div>
+      <div style="text-align:right">
+        <b>${inr(e.amount)}</b>
+        <div class="actions" style="justify-content:flex-end;margin-top:4px">
+          <button class="ghost small" data-edit="${esc(e.id)}">Edit</button>
+          <button class="ghost small danger" data-del="${esc(e.id)}">Delete</button>
+        </div>
+      </div>
+    </div>`).join('') : '<div style="color:var(--muted)">No matching entries</div>';
+}
+['qSearch','qType','qMonth'].forEach(id => $(id).addEventListener('input', render));
+$('sMonth').addEventListener('change', render);
+
+/* ---------- form ---------- */
+function resetForm() {
+  editingId = null;
+  $('formTitle').textContent = 'Add entry';
+  $('saveBtn').textContent = 'Save entry';
+  $('cancelEdit').classList.add('hidden');
+  $('fPerson').value = ''; $('fAmount').value = ''; $('fNotes').value = '';
+}
+$('cancelEdit').onclick = resetForm;
+
+$('saveBtn').onclick = async () => {
+  const entry = {
+    id: editingId,
+    month: $('fMonth').value,
+    type: $('fType').value,
+    person: $('fPerson').value.trim(),
+    amount: $('fAmount').value,
+    notes: $('fNotes').value.trim()
+  };
+  const msg = $('formMsg');
+  if (!entry.month || !entry.person || !(Number(entry.amount) > 0)) {
+    msg.className = 'msg err'; msg.textContent = 'Please fill month, name and a valid amount.'; return;
+  }
+  $('saveBtn').disabled = true; msg.className = 'msg'; msg.textContent = 'Saving…';
+  try {
+    const r = await api(editingId ? 'update' : 'add', {entry});
+    if (!r.ok) throw new Error(r.error);
+    msg.className = 'msg ok'; msg.textContent = editingId ? 'Updated ✓' : 'Saved ✓';
+    resetForm();
+    $('sMonth').value = entry.month;
+    await refresh();
+  } catch (e) {
+    msg.className = 'msg err'; msg.textContent = 'Not saved: ' + e.message;
+  } finally { $('saveBtn').disabled = false; }
+};
+
+$('recent').addEventListener('click', async ev => {
+  const editId = ev.target.dataset.edit, delId = ev.target.dataset.del;
+  if (editId) {
+    const e = entries.find(x => x.id === editId); if (!e) return;
+    editingId = e.id;
+    $('fMonth').value = e.month; $('fType').value = e.type; $('fPerson').value = e.person;
+    $('fAmount').value = e.amount; $('fNotes').value = e.notes;
+    $('formTitle').textContent = 'Edit entry';
+    $('saveBtn').textContent = 'Save changes';
+    $('cancelEdit').classList.remove('hidden');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  if (delId) {
+    const e = entries.find(x => x.id === delId); if (!e) return;
+    if (!confirm(`Delete ${e.person} – ${inr(e.amount)} (${prettyMonth(e.month)})?`)) return;
+    const r = await api('delete', {id: delId});
+    $('listMsg').className = r.ok ? 'msg ok' : 'msg err';
+    $('listMsg').textContent = r.ok ? 'Deleted' : r.error;
+    await refresh();
+  }
+});
+
+/* auto-login if password already entered this session */
+if (password && API_URL.startsWith('http')) login(password);
+</script>
+</body>
+</html>
